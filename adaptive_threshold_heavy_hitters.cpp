@@ -103,54 +103,6 @@ protected:
         }
     };
 
-public:
-    AdaptiveThresholdHeavyHitters(float threshold_percent_arg, int **hash_functions_arg, int l_arg, int B_arg) {
-        set_values(threshold_percent_arg, hash_functions_arg, l_arg, B_arg);
-    };
-
-    void report_key(Key key) {
-        total_set.insert(key);
-        total_hits = total_hits + 1;
-
-        int new_count = (*hh_sketch).update(key);
-
-        if(new_count >= hot_threshold) {
-            if(hot_map.find(key) != hot_map.end()) {
-                hot_map[key] = new_count;
-            } else {
-                hot_map[key] = new_count;
-            }
-        }
-
-        if((-1 * new_count) >= cold_threshold) {
-            if(cold_map.find(key) != cold_map.end()) {
-                cold_map[key] = new_count;
-            } else {
-                cold_map[key] = new_count;
-            }
-        }
-
-        int total_size = total_set.size();
-
-        if(!(threshold_met) && (total_size > min_threshold)) {
-            threshold_met = true;
-            update_hot();
-            update_cold();
-        }
-
-        if(threshold_met) {
-            int hot_size = hot_map.size();
-            if (hot_size > (threshold_percent * total_size)) {
-                update_hot();
-            }
-
-            int cold_size = cold_map.size();
-            if (cold_size > (threshold_percent * total_size)) {
-                update_cold();
-            }
-        }
-    };
-
     void update_hot(void) {
         int* vals;
         std::unordered_map<Key, int> new_hot_map;
@@ -199,6 +151,54 @@ public:
 
         cold_map = new_cold_map;
         cold_threshold = median;
+    };
+
+public:
+    AdaptiveThresholdHeavyHitters(float threshold_percent_arg, int **hash_functions_arg, int l_arg, int B_arg) {
+        set_values(threshold_percent_arg, hash_functions_arg, l_arg, B_arg);
+    };
+
+    void report_key(Key key) {
+        total_set.insert(key);
+        total_hits = total_hits + 1;
+
+        int new_count = (*hh_sketch).update(key);
+
+        if(new_count >= hot_threshold) {
+            if(hot_map.find(key) != hot_map.end()) {
+                hot_map[key] = new_count;
+            } else {
+                hot_map[key] = new_count;
+            }
+        }
+
+        if((-1 * new_count) >= cold_threshold) {
+            if(cold_map.find(key) != cold_map.end()) {
+                cold_map[key] = new_count;
+            } else {
+                cold_map[key] = new_count;
+            }
+        }
+
+        int total_size = total_set.size();
+
+        if(!(threshold_met) && (total_size > min_threshold)) {
+            threshold_met = true;
+            update_hot();
+            update_cold();
+        }
+
+        if(threshold_met) {
+            int hot_size = hot_map.size();
+            if (hot_size > (threshold_percent * total_size)) {
+                update_hot();
+            }
+
+            int cold_size = cold_map.size();
+            if (cold_size > (threshold_percent * total_size)) {
+                update_cold();
+            }
+        }
     };
 
     int get_key_count(Key key) {
