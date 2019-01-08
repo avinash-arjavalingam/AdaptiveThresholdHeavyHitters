@@ -3,6 +3,7 @@
 //
 
 #include <cstdlib>
+#include <climits>
 #include <iostream>
 #include <ctime>
 #include <cmath>
@@ -20,6 +21,8 @@ protected:
     HeavyHittersSketch* hh_sketch;
 
     int total_hits;
+    int total_hot_update;
+    int total_cold_update;
     std::unordered_set<Key> total_set;
 
     std::unordered_map<Key, int> hot_map;
@@ -28,9 +31,6 @@ protected:
     float threshold_percent;
     int hot_threshold;
     int cold_threshold;
-
-    int min_threshold;
-    bool threshold_met;
 
     void set_values(float threshold_percent_arg, int **hash_functions_arg, int l_arg, int B_arg) {
         std::unordered_set<Key> reset_total_set;
@@ -47,10 +47,10 @@ protected:
         total_hits = 0;
 
         hot_threshold = 0;
-        cold_threshold = 0;
+        cold_threshold = -1;
 
-        min_threshold = 100;
-        threshold_met = false;
+        total_hot_update = 0;
+        total_cold_update = 0;
     };
 
     int partition(int list[], int left, int right, int pivotIndex) {
@@ -108,6 +108,7 @@ protected:
         std::unordered_map<Key, int> new_hot_map;
         std::vector<int> val_vec;
         int val_size = 0;
+        total_hot_update += 1;
 
         for(auto kv: hot_map) {
             val_size = val_size + 1;
@@ -128,12 +129,13 @@ protected:
         hot_threshold = median;
     };
 
-    /*
+
     void update_cold(void) {
         int* vals;
         std::unordered_map<Key, int> new_cold_map;
         std::vector<int> val_vec;
         int val_size = 0;
+        total_cold_update += 1;
 
         for(auto kv: cold_map) {
             val_size = val_size + 1;
@@ -145,7 +147,7 @@ protected:
         int median = (-1 * select(vals, 0, val_size - 1, 1));
 
         for(auto kv: cold_map) {
-            if((-1 * kv.second) > median) {
+            if((-1 * kv.second) >= median) {
                 new_cold_map[kv.first] = kv.second;
             }
         }
@@ -153,7 +155,7 @@ protected:
         cold_map = new_cold_map;
         cold_threshold = median;
     };
-    */
+
 
 public:
     AdaptiveThresholdHeavyHitters(float threshold_percent_arg, int **hash_functions_arg, int l_arg, int B_arg) {
@@ -167,53 +169,23 @@ public:
         int new_count = (*hh_sketch).update(key);
 
         if(new_count > hot_threshold) {
-            /*
-            if(hot_map.find(key) != hot_map.end()) {
-                hot_map[key] = new_count;
-            } else {
-                hot_map[key] = new_count;
-            }
-            */
             hot_map[key] = new_count;
         }
 
-        /*
         if((-1 * new_count) >= cold_threshold) {
-            if(cold_map.find(key) != cold_map.end()) {
-                cold_map[key] = new_count;
-            } else {
-                cold_map[key] = new_count;
-            }
+            cold_map[key] = new_count;
         }
-        */
-
-        cold_map[key] = new_count;
 
         int total_size = total_set.size();
-
-        /*
-        if(!(threshold_met) && (total_size > min_threshold)) {
-            threshold_met = true;
-            update_hot();
-            update_cold();
-        }
-
-        if(threshold_met) {
-            int hot_size = hot_map.size();
-            if (hot_size > (threshold_percent * total_size)) {
-                update_hot();
-            }
-
-            int cold_size = cold_map.size();
-            if (cold_size > (threshold_percent * total_size)) {
-                update_cold();
-            }
-        }
-        */
 
         int hot_size = hot_map.size();
         if (hot_size > (threshold_percent * total_size)) {
             update_hot();
+        }
+
+        int cold_size = cold_map.size();
+        if (cold_size > (threshold_percent * total_size)) {
+            update_cold();
         }
 
     };
@@ -238,6 +210,22 @@ public:
 
     int get_hot_threshold() {
         return hot_threshold;
+    };
+
+    int get_cold_threshold() {
+        return cold_threshold;
+    };
+
+    int get_total_size() {
+        return total_set.size();
+    };
+
+    int get_thu() {
+        return total_hot_update;
+    };
+
+    int get_tcu() {
+        return total_cold_update;
     };
 
     void reset(float threshold_percent_arg, int **hash_functions_arg, int l_arg, int B_arg) {

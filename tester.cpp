@@ -14,7 +14,7 @@
 #include "statsHelper.hpp"
 
 #define gamma 0.01
-#define epsilon 0.0025
+#define epsilon 0.00025
 
 typedef std::string Key;
 
@@ -51,7 +51,7 @@ int main() {
     std::cout << "B: " << B << std::endl;
     int** hash_functions = get_hash_functions(l);
     Key key1 = "testing";
-    std::vector<Key> inputs = generateZipWorkload(1000, 0.8, 0);
+    std::vector<Key> inputs = generateZipWorkload(10000, 0.8, 0);
     std::unordered_map<std::string, int> freqMap = computeFrequencies(inputs);
     std::pair<double, double> stats = computeStats(freqMap);
     HeavyHittersSketch *hh = new HeavyHittersSketch(hash_functions, l, B);
@@ -72,7 +72,7 @@ int main() {
 
 
 
-    AdaptiveThresholdHeavyHitters *athh = new AdaptiveThresholdHeavyHitters(0.1, hash_functions, l, B);
+    AdaptiveThresholdHeavyHitters *athh = new AdaptiveThresholdHeavyHitters(0.01, hash_functions, l, B);
     for (auto k: inputs) {
         athh->report_key(k);
     }
@@ -84,7 +84,7 @@ int main() {
         std::cout << k << " ATHH key count: " << athh->get_key_count(k) << std::endl;
     }
     */
-    std::cout << "Cold count: " << (athh->get_cold_map()).size() << std::endl;
+    std::cout << "Total count: " << (athh->get_total_size()) << std::endl;
     std::cout << "Hot count: " << (athh->get_hot_map()).size() << std::endl;
 
     for(auto kv: athh->get_hot_map()) {
@@ -92,4 +92,16 @@ int main() {
     }
 
     std::cout << "Hot threshold: " << athh->get_hot_threshold()<< std::endl;
+    std::cout << "Total hot update: " << athh->get_thu()<< std::endl;
+
+
+
+    std::cout << "Cold count: " << (athh->get_cold_map()).size() << std::endl;
+
+    for(auto kv: athh->get_cold_map()) {
+        std::cout << kv.first << ": " << kv.second << std::endl;
+    }
+
+    std::cout << "Cold threshold: " << athh->get_cold_threshold()<< std::endl;
+    std::cout << "Total cold update: " << athh->get_tcu()<< std::endl;
 }
