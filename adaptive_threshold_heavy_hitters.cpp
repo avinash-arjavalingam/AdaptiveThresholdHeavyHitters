@@ -114,7 +114,7 @@ protected:
             val_vec.push_back(kv.second);
         }
 
-        vals = &val_vec[0];
+        vals = (int*)(&val_vec[0]);
 
         int median = select(vals, 0, val_size - 1, 1);
 
@@ -128,6 +128,7 @@ protected:
         hot_threshold = median;
     };
 
+    /*
     void update_cold(void) {
         int* vals;
         std::unordered_map<Key, int> new_cold_map;
@@ -152,6 +153,7 @@ protected:
         cold_map = new_cold_map;
         cold_threshold = median;
     };
+    */
 
 public:
     AdaptiveThresholdHeavyHitters(float threshold_percent_arg, int **hash_functions_arg, int l_arg, int B_arg) {
@@ -164,14 +166,18 @@ public:
 
         int new_count = (*hh_sketch).update(key);
 
-        if(new_count >= hot_threshold) {
+        if(new_count > hot_threshold) {
+            /*
             if(hot_map.find(key) != hot_map.end()) {
                 hot_map[key] = new_count;
             } else {
                 hot_map[key] = new_count;
             }
+            */
+            hot_map[key] = new_count;
         }
 
+        /*
         if((-1 * new_count) >= cold_threshold) {
             if(cold_map.find(key) != cold_map.end()) {
                 cold_map[key] = new_count;
@@ -179,9 +185,13 @@ public:
                 cold_map[key] = new_count;
             }
         }
+        */
+
+        cold_map[key] = new_count;
 
         int total_size = total_set.size();
 
+        /*
         if(!(threshold_met) && (total_size > min_threshold)) {
             threshold_met = true;
             update_hot();
@@ -199,6 +209,13 @@ public:
                 update_cold();
             }
         }
+        */
+
+        int hot_size = hot_map.size();
+        if (hot_size > (threshold_percent * total_size)) {
+            update_hot();
+        }
+
     };
 
     int get_key_count(Key key) {
@@ -217,6 +234,10 @@ public:
         int total_size = total_set.size();
         double avg = total_hits / ((double)(total_size));
         return avg;
+    };
+
+    int get_hot_threshold() {
+        return hot_threshold;
     };
 
     void reset(float threshold_percent_arg, int **hash_functions_arg, int l_arg, int B_arg) {

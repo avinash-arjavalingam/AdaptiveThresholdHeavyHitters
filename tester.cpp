@@ -11,9 +11,12 @@
 #include <cmath>
 #include <stdlib.h>
 #include "adaptive_threshold_heavy_hitters.cpp"
+#include "statsHelper.hpp"
 
 #define gamma 0.01
-#define epsilon 0.05
+#define epsilon 0.0025
+
+typedef std::string Key;
 
 int** get_hash_functions(int l) {
     int **hash_functions;
@@ -38,8 +41,55 @@ int get_B(void) {
 }
 
 int main() {
+    double count = 1;
+    double totalDev = 0;
+    double avgErr = 0;
+    int i = 0;
     int l = get_l();
     int B = get_B();
+    std::cout << "L: " << l << std::endl;
+    std::cout << "B: " << B << std::endl;
     int** hash_functions = get_hash_functions(l);
-    AdaptiveThresholdHeavyHitters *athh = new AdaptiveThresholdHeavyHitters(0.2, hash_functions, l, B);
+    Key key1 = "testing";
+    std::vector<Key> inputs = generateZipWorkload(1000, 0.8, 0);
+    std::unordered_map<std::string, int> freqMap = computeFrequencies(inputs);
+    std::pair<double, double> stats = computeStats(freqMap);
+    HeavyHittersSketch *hh = new HeavyHittersSketch(hash_functions, l, B);
+    for (auto k: inputs) {
+        hh->update(k);
+    }
+    std::cout << "Mean: " << stats.first << std::endl;
+    std::cout << "Standard Deviation: " << stats.second << std::endl;
+    for (auto k: inputs) {
+        // std::cout << k << " standard key: " << freqMap[k] << std::endl;
+        // std::cout << k << " heavyHitters: " << hh->estimate(k) << std::endl;
+        count += 1;
+        totalDev += ((hh->estimate(k)) - (freqMap[k])) / (freqMap[k]);
+    }
+    avgErr = totalDev / count;
+    std::cout << "Average Error: " << avgErr << std::endl;
+
+
+
+
+    AdaptiveThresholdHeavyHitters *athh = new AdaptiveThresholdHeavyHitters(0.1, hash_functions, l, B);
+    for (auto k: inputs) {
+        athh->report_key(k);
+    }
+
+    std::cout<< "ATHH count: " << athh->get_average() << std::endl;
+    /*
+    for (auto k: inputs) {
+        std::cout << k << " standard key:   " << freqMap[k] << std::endl;
+        std::cout << k << " ATHH key count: " << athh->get_key_count(k) << std::endl;
+    }
+    */
+    std::cout << "Cold count: " << (athh->get_cold_map()).size() << std::endl;
+    std::cout << "Hot count: " << (athh->get_hot_map()).size() << std::endl;
+
+    for(auto kv: athh->get_hot_map()) {
+        std::cout << kv.first << ": " << kv.second << std::endl;
+    }
+
+    std::cout << "Hot threshold: " << athh->get_hot_threshold()<< std::endl;
 }
