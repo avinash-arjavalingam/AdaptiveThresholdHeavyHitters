@@ -172,7 +172,7 @@ public:
         if(!(stop_updating) && !(is_updating)) {
             is_updating = true;
             while(!(stop_updating)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 int total_size = total_set.size();
                 int hot_size = hot_map.size();
                 if (hot_size > (threshold_percent * total_size)) {

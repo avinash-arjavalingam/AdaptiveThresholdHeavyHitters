@@ -62,7 +62,7 @@ int main() {
 
     std::thread t1(&AdaptiveThresholdHeavyHitters::periodic_update, athh);
     for (auto k: inputs) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
         athh->report_key(k);
     }
     athh->stop_checking();
