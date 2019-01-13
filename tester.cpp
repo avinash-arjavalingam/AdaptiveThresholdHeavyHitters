@@ -56,43 +56,18 @@ int main() {
     std::vector<Key> inputs = generateZipWorkload(10000, 0.8, 0);
     std::unordered_map<std::string, int> freqMap = computeFrequencies(inputs);
     std::pair<double, double> stats = computeStats(freqMap);
-    /*
-    HeavyHittersSketch *hh = new HeavyHittersSketch(hash_functions, l, B);
-    for (auto k: inputs) {
-        hh->update(k);
-    }
-    std::cout << "Mean: " << stats.first << std::endl;
-    std::cout << "Standard Deviation: " << stats.second << std::endl;
-    for (auto k: inputs) {
-        // std::cout << k << " standard key: " << freqMap[k] << std::endl;
-        // std::cout << k << " heavyHitters: " << hh->estimate(k) << std::endl;
-        count += 1;
-        totalDev += ((hh->estimate(k)) - (freqMap[k])) / (freqMap[k]);
-    }
-    avgErr = totalDev / count;
-    std::cout << "Average Error: " << avgErr << std::endl;
-    */
 
 
     AdaptiveThresholdHeavyHitters *athh = new AdaptiveThresholdHeavyHitters(0.01, hash_functions, l, B);
-    int counter = 0;
 
     std::thread t1(&AdaptiveThresholdHeavyHitters::periodic_update, athh);
     for (auto k: inputs) {
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
         athh->report_key(k);
-        counter += 1;
     }
     athh->stop_checking();
 
-    std::cout<< "Count: " << counter << std::endl;
     std::cout<< "ATHH count: " << athh->get_average() << std::endl;
-    /*
-    for (auto k: inputs) {
-        std::cout << k << " standard key:   " << freqMap[k] << std::endl;
-        std::cout << k << " ATHH key count: " << athh->get_key_count(k) << std::endl;
-    }
-    */
     std::cout << "Total count: " << (athh->get_total_size()) << std::endl;
     std::cout << "Hot count: " << (athh->get_hot_map()).size() << std::endl;
 
