@@ -2,6 +2,8 @@
 // Created by Avinash Arjavalingam on 12/5/18.
 //
 
+#include <chrono>
+#include <thread>
 #include <vector>
 #include <cstdlib>
 #include <unordered_map>
@@ -54,6 +56,7 @@ int main() {
     std::vector<Key> inputs = generateZipWorkload(10000, 0.8, 0);
     std::unordered_map<std::string, int> freqMap = computeFrequencies(inputs);
     std::pair<double, double> stats = computeStats(freqMap);
+    /*
     HeavyHittersSketch *hh = new HeavyHittersSketch(hash_functions, l, B);
     for (auto k: inputs) {
         hh->update(k);
@@ -68,15 +71,21 @@ int main() {
     }
     avgErr = totalDev / count;
     std::cout << "Average Error: " << avgErr << std::endl;
-
-
+    */
 
 
     AdaptiveThresholdHeavyHitters *athh = new AdaptiveThresholdHeavyHitters(0.01, hash_functions, l, B);
-    for (auto k: inputs) {
-        athh->report_key(k);
-    }
+    int counter = 0;
 
+    std::thread t1(&AdaptiveThresholdHeavyHitters::periodic_update, athh);
+    for (auto k: inputs) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        athh->report_key(k);
+        counter += 1;
+    }
+    athh->stop_checking();
+
+    std::cout<< "Count: " << counter << std::endl;
     std::cout<< "ATHH count: " << athh->get_average() << std::endl;
     /*
     for (auto k: inputs) {

@@ -3,6 +3,7 @@
 //
 
 #include <cstdlib>
+#include <thread>
 #include <climits>
 #include <iostream>
 #include <ctime>
@@ -20,6 +21,8 @@ class AdaptiveThresholdHeavyHitters {
 protected:
     HeavyHittersSketch* hh_sketch;
 
+    bool is_updating;
+    bool stop_updating;
     int total_hits;
     int total_hot_update;
     int total_cold_update;
@@ -47,10 +50,13 @@ protected:
         total_hits = 0;
 
         hot_threshold = 0;
-        cold_threshold = -1;
+        cold_threshold = INT_MIN;
 
         total_hot_update = 0;
         total_cold_update = 0;
+
+        is_updating = false;
+        stop_updating = false;
     };
 
     int partition(int list[], int left, int right, int pivotIndex) {
@@ -162,6 +168,42 @@ public:
         set_values(threshold_percent_arg, hash_functions_arg, l_arg, B_arg);
     };
 
+    int periodic_update() {
+        if(!(stop_updating) && !(is_updating)) {
+            is_updating = true;
+            while(!(stop_updating)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                int total_size = total_set.size();
+                int hot_size = hot_map.size();
+                if (hot_size > (threshold_percent * total_size)) {
+                    update_hot();
+                }
+
+                int cold_size = cold_map.size();
+                if (cold_size > (threshold_percent * total_size)) {
+                    update_cold();
+                }
+            }
+        }
+
+        return 1;
+    };
+
+    void stop_checking() {
+        stop_updating = true;
+        int total_size = total_set.size();
+
+        int hot_size = hot_map.size();
+        if (hot_size > (threshold_percent * total_size)) {
+            update_hot();
+        }
+
+        int cold_size = cold_map.size();
+        if (cold_size > (threshold_percent * total_size)) {
+            update_cold();
+        }
+    };
+
     void report_key(Key key) {
         total_set.insert(key);
         total_hits = total_hits + 1;
@@ -174,20 +216,11 @@ public:
 
         if((-1 * new_count) >= cold_threshold) {
             cold_map[key] = new_count;
+        } else {
+            if(cold_map.find(key) != cold_map.end()) {
+                cold_map.erase(key);
+            }
         }
-
-        int total_size = total_set.size();
-
-        int hot_size = hot_map.size();
-        if (hot_size > (threshold_percent * total_size)) {
-            update_hot();
-        }
-
-        int cold_size = cold_map.size();
-        if (cold_size > (threshold_percent * total_size)) {
-            update_cold();
-        }
-
     };
 
     int get_key_count(Key key) {
