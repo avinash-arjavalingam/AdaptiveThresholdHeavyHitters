@@ -20,12 +20,10 @@ typedef std::string Key;
 class AdaptiveThresholdHeavyHitters {
 protected:
     HeavyHittersSketch* hh_sketch;
+    std::mutex data_lock;
 
     bool is_updating;
     bool stop_updating;
-    int total_hits;
-    int total_hot_update;
-    int total_cold_update;
     std::unordered_set<Key> total_set;
 
     std::unordered_map<Key, int> hot_map;
@@ -47,13 +45,8 @@ protected:
         hh_sketch = new HeavyHittersSketch(hash_functions_arg, l_arg, B_arg);
         threshold_percent = threshold_percent_arg;
 
-        total_hits = 0;
-
         hot_threshold = 0;
         cold_threshold = INT_MIN;
-
-        total_hot_update = 0;
-        total_cold_update = 0;
 
         is_updating = false;
         stop_updating = false;
@@ -114,7 +107,6 @@ protected:
         std::unordered_map<Key, int> new_hot_map;
         std::vector<int> val_vec;
         int val_size = 0;
-        total_hot_update += 1;
 
         for(auto kv: hot_map) {
             val_size = val_size + 1;
@@ -141,7 +133,6 @@ protected:
         std::unordered_map<Key, int> new_cold_map;
         std::vector<int> val_vec;
         int val_size = 0;
-        total_cold_update += 1;
 
         for(auto kv: cold_map) {
             val_size = val_size + 1;
@@ -162,7 +153,6 @@ protected:
         cold_threshold = median;
     };
 
-
 public:
     AdaptiveThresholdHeavyHitters(float threshold_percent_arg, int **hash_functions_arg, int l_arg, int B_arg) {
         set_values(threshold_percent_arg, hash_functions_arg, l_arg, B_arg);
@@ -173,6 +163,7 @@ public:
             is_updating = true;
             while(!(stop_updating)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                data_lock.lock();
                 int total_size = total_set.size();
                 int hot_size = hot_map.size();
                 if (hot_size > (threshold_percent * total_size)) {
@@ -183,6 +174,7 @@ public:
                 if (cold_size > (threshold_percent * total_size)) {
                     update_cold();
                 }
+                data_lock.unlock();
             }
         }
 
@@ -190,6 +182,7 @@ public:
     };
 
     void stop_checking() {
+        data_lock.lock();
         stop_updating = true;
         int total_size = total_set.size();
 
@@ -202,11 +195,12 @@ public:
         if (cold_size > (threshold_percent * total_size)) {
             update_cold();
         }
+        data_lock.unlock();
     };
 
     void report_key(Key key) {
+        data_lock.lock();
         total_set.insert(key);
-        total_hits = total_hits + 1;
 
         int new_count = (*hh_sketch).update(key);
 
@@ -221,48 +215,65 @@ public:
                 cold_map.erase(key);
             }
         }
+        data_lock.unlock();
     };
 
     int get_key_count(Key key) {
-        return (*hh_sketch).estimate(key);
+        int temp_key_count;
+        data_lock.lock();
+        temp_key_count = (*hh_sketch).estimate(key);
+        data_lock.unlock();
+        return temp_key_count;
     };
 
     std::unordered_map<Key, int> get_hot_map(void) {
-        return hot_map;
+        std::unordered_map<Key, int> temp_hot_map;
+        data_lock.lock();
+        for(auto kv: hot_map) {
+            temp_hot_map[kv.first] = kv.second;
+        }
+        data_lock.unlock();
+        return temp_hot_map;
     };
 
     std::unordered_map<Key, int> get_cold_map(void) {
-        return cold_map;
-    };
-
-    double get_average(void) {
-        int total_size = total_set.size();
-        double avg = total_hits / ((double)(total_size));
-        return avg;
+        std::unordered_map<Key, int> temp_cold_map;
+        data_lock.lock();
+        for(auto kv: cold_map) {
+            temp_cold_map[kv.first] = kv.second;
+        }
+        data_lock.unlock();
+        return temp_cold_map;
     };
 
     int get_hot_threshold() {
-        return hot_threshold;
+        int temp_hot_threshold;
+        data_lock.lock();
+        temp_hot_threshold = hot_threshold;
+        data_lock.unlock();
+        return temp_hot_threshold;
     };
 
     int get_cold_threshold() {
-        return cold_threshold;
+        int temp_cold_threshold;
+        data_lock.lock();
+        temp_cold_threshold = cold_threshold;
+        data_lock.unlock();
+        return temp_cold_threshold;
     };
 
     int get_total_size() {
-        return total_set.size();
-    };
-
-    int get_thu() {
-        return total_hot_update;
-    };
-
-    int get_tcu() {
-        return total_cold_update;
+        int temp_total_set_size;
+        data_lock.lock();
+        temp_total_set_size = total_set.size();
+        data_lock.unlock();
+        return temp_total_set_size;
     };
 
     void reset(float threshold_percent_arg, int **hash_functions_arg, int l_arg, int B_arg) {
+        data_lock.lock();
         set_values(threshold_percent_arg, hash_functions_arg, l_arg, B_arg);
+        data_lock.unlock();
     };
 };
 

@@ -66,8 +66,8 @@ int main() {
         athh->report_key(k);
     }
     athh->stop_checking();
+    t1.join();
 
-    std::cout<< "ATHH count: " << athh->get_average() << std::endl;
     std::cout << "Total count: " << (athh->get_total_size()) << std::endl;
     std::cout << "Hot count: " << (athh->get_hot_map()).size() << std::endl;
 
@@ -76,8 +76,6 @@ int main() {
     }
 
     std::cout << "Hot threshold: " << athh->get_hot_threshold()<< std::endl;
-    std::cout << "Total hot update: " << athh->get_thu()<< std::endl;
-
 
 
     std::cout << "Cold count: " << (athh->get_cold_map()).size() << std::endl;
@@ -87,5 +85,4 @@ int main() {
     }
 
     std::cout << "Cold threshold: " << athh->get_cold_threshold()<< std::endl;
-    std::cout << "Total cold update: " << athh->get_tcu()<< std::endl;
 }
