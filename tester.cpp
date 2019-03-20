@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <utility>
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <cmath>
 #include <stdlib.h>
@@ -20,7 +21,34 @@
 typedef std::string Key;
 
 int main() {
-    std::vector<Key> inputs = generateZipWorkload(10000, 0.8, 0);
+
+    std::vector<Key> inputs;
+
+    std::ifstream in("cli.txt");
+
+    if(!in) {
+        std::cout << "Cannot open input file.\n";
+        return 1;
+    }
+
+    char strLine[255];
+
+    while(in) {
+        in.getline(strLine, 255);  // delim defaults to '\n'
+        if(in) {
+            std::string line = std::string(strLine);
+            Key inp = line.substr(4, 8);
+            inputs.push_back(inp);
+            // std::cout << line.substr(4, 8) << std::endl;
+        }
+
+    }
+
+    in.close();
+
+
+    // std::vector<Key> inputs = generateZipWorkload(10000, 0.8, 0);
+
     std::unordered_map<std::string, int> freqMap = computeFrequencies(inputs);
     std::pair<double, double> stats = computeStats(freqMap);
 

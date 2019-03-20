@@ -191,7 +191,7 @@ public:
             cold_map[key] = new_count;
         } else {
             if(cold_map.find(key) != cold_map.end()) {
-                cold_map.erase(key);
+                cold_map[key] = new_count;
             }
         }
 
