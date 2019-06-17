@@ -25,21 +25,48 @@ typedef std::string Key;
 
 class AdaptiveThresholdHeavyHitters {
 protected:
+
+    // When the term "report" is used in conjunction with keys, it refers to
+    // an action during the lifetime of the KVS node that corresponds to this
+    // AdaptiveThresholdHeavyHitters, specifically a key being observed to be
+    // used via a write or read operation in the node
+
+    // Heavy hitters or count min sketch used to store the estimated
+    // counts of the keys in a space efficient manner
     HeavyHittersSketch* hh_sketch;
+
+    // The percent of keys that can be in each map compared to the total number of unique
+    // keys. As an example, a threshold percent of 0.1 means that the capacities of the individual
+    // maps can be at most 10 percent of the number of total unique keys in the keyspace.
     static float threshold_percent;
+
+    // The L value is be determined by the class attribute gamma, with L = ceil(log(gamma))
     static float gamma;
+
+    // The B value is be determined by the class attribute epsilon, with B = ceil(e/epsilon)
     static float epsilon;
 
+    // Contains every unique key reported to the sketch
     std::unordered_set<Key> total_set;
 
+    // Contains the keys that have been reported the most
     std::unordered_map<Key, int> hot_map;
+
+    // Contains the keys with the lowest number of times reported to the sketch.
     std::unordered_map<Key, int> cold_map;
 
+    //  The hot threshold is the lowest possible key access count that a key can have to be added to the hot map
     int hot_threshold;
+
+    // The cold threshold is the highest possible key access count to be added to the cold map
     int cold_threshold;
 
+    // The last time the maps have been checked to make sure they have not grown too large in size
+    // relative to the threshold percent.
     std::chrono::system_clock::time_point last_update_time;
 
+    // Used in the constructor and the reset function to set the class members, and initialize
+    // the heavy hitters sketch
     void set_values() {
         int B_arg = (int)(ceil(exp(1)/epsilon));
         int l_arg = (int)(ceil(log(gamma)));
@@ -59,6 +86,10 @@ protected:
 
         last_update_time = std::chrono::system_clock::now();
     };
+
+    // The partition and select functions are the two functions of the
+    // quick select algorithm used to determine the median values of
+    // the hot and cold maps. These medians are unique to each map.
 
     int partition(int list[], int left, int right, int pivotIndex) {
         int pivotValue = list[pivotIndex];
@@ -110,6 +141,10 @@ protected:
         }
     };
 
+    // Used to "clean" the hot map. The map’s list of access counts (all the
+    // values in the key-value pairs) are collected, and the cleaning function
+    // finds the median of these mapped values. Then all values below the median
+    // are removed from the map
     void update_hot(void) {
         int* vals;
         std::unordered_map<Key, int> new_hot_map;
@@ -135,7 +170,10 @@ protected:
         hot_threshold = median;
     };
 
-
+    // Used to "clean" the cold map. The map’s list of access counts (all the
+    // values in the key-value pairs) are collected, and the cleaning function
+    // finds the median of these mapped values. Then all values above the median
+    // are removed from the map
     void update_cold(void) {
         int* vals;
         std::unordered_map<Key, int> new_cold_map;
@@ -161,6 +199,8 @@ protected:
         cold_threshold = median;
     };
 
+    // Used to create the hash functions which are then used by heavy_hitters.cpp
+    // These hash functions consist of a coefficient and a constant
     int** get_hash_functions(int l) {
         int **hash_functions;
         srand(time(NULL));
@@ -178,6 +218,14 @@ public:
         set_values();
     };
 
+    // When a key is reported, it is added to the total_set if unique, and then
+    // to the heavy hitters sketch, which returns the sketch's estimated value.
+    // Then, it sees if the estimated key count would allow it entrance to
+    // either the hot or cold map, and adds it to the relevant map if so.
+    // Finally, the function checks if at least 10 milliseconds have passed.
+    // If so, it checks both maps, and sees if the maps contain fewer than
+    // (threshold percent * total number of unique keys) keys. For the maps that
+    // violate this condition, the cleaning function (update_hot/cold) is run.
     void report_key(Key key) {
         total_set.insert(key);
 
