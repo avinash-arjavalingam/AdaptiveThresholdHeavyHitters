@@ -2,22 +2,10 @@
 // Created by Avinash Arjavalingam on 12/5/18.
 //
 
-#include <cstdlib>
-#include <thread>
-#include <climits>
-#include <iostream>
-#include <ctime>
-#include <cmath>
-#include <utility>
-#include <stdlib.h>
-#include <stdbool.h>
+#include "heavy_hitters.cpp"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "heavy_hitters.cpp"
-#include <iomanip>
-#include <chrono>
-#include <stdio.h>
 
 #define alpha 0.2
 

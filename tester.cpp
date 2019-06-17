@@ -2,21 +2,11 @@
 // Created by Avinash Arjavalingam on 12/5/18.
 //
 
-#include <chrono>
-#include <thread>
-#include <vector>
-#include <cstdlib>
-#include <unordered_map>
-#include <utility>
 #include <iostream>
 #include <fstream>
-#include <stdio.h>
-#include <cmath>
-#include <stdlib.h>
 #include "adaptive_threshold_heavy_hitters.cpp"
 #include "statsHelper.hpp"
-#include <ctime>
-#include <iomanip>
+#include <thread>
 
 typedef std::string Key;
 

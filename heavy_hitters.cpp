@@ -2,15 +2,6 @@
 // Created by Avinash Arjavalingam on 12/5/18.
 //
 
-#include <cstdlib>
-#include <iostream>
-#include <ctime>
-#include <cmath>
-#include <stdlib.h>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-
 typedef std::string Key;
 
 // Used for the creation of the universal hash functions
