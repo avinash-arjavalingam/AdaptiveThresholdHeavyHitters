@@ -71,13 +71,10 @@ protected:
         int B_arg = (int)(ceil(exp(1)/epsilon));
         int l_arg = (int)(ceil(log(gamma)));
         int** hash_functions_arg = get_hash_functions(l_arg);
-        std::unordered_set<Key> reset_total_set;
-        std::unordered_map<Key, int> reset_hot_map;
-        std::unordered_map<Key, int> reset_cold_map;
 
-        total_set = reset_total_set;
-        hot_map = reset_hot_map;
-        cold_map = reset_cold_map;
+        total_set.clear();
+        hot_map.clear();
+        cold_map.clear();
 
         hh_sketch = new HeavyHittersSketch(hash_functions_arg, l_arg, B_arg);
 
