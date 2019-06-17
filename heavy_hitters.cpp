@@ -2,8 +2,6 @@
 // Created by Avinash Arjavalingam on 12/5/18.
 //
 
-typedef std::string Key;
-
 // Used for the creation of the universal hash functions
 // The large prime is used to create random integer values for the
 // hash functions.

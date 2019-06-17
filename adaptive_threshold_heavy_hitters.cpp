@@ -7,10 +7,6 @@
 #include <unordered_set>
 #include <vector>
 
-#define alpha 0.2
-
-typedef std::string Key;
-
 class AdaptiveThresholdHeavyHitters {
 protected:
 
@@ -273,19 +269,6 @@ public:
 
     void reset() {
         set_values();
-    };
-
-    static void reset_threshold_percent(float new_threshold) {
-        threshold_percent = new_threshold;
-    };
-
-    static void reset_error(float new_epsilon) {
-        epsilon = new_epsilon;
-    };
-
-    static void update_gamma(int total_hits, int num_hh) {
-        float avg_hit = (1.0 * total_hits) / num_hh;
-        gamma = (alpha * avg_hit) + ((1 - alpha) * gamma);
     };
 
 };
